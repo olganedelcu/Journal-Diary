@@ -55,7 +55,7 @@ export default function WelcomePage() {
 
           <button
             className="welcome-card"
-            onClick={() => navigate('/entries/new')}
+            onClick={() => navigate('/photos')}
           >
             <div className="welcome-card-icon">
               <ImageIcon size={28} />

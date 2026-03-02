@@ -6,6 +6,7 @@ import EntriesPage from './pages/EntriesPage';
 import ViewEntryPage from './pages/ViewEntryPage';
 import EditEntryPage from './pages/EditEntryPage';
 import TimelinePage from './pages/TimelinePage';
+import PhotosPage from './pages/PhotosPage';
 import './App.css';
 
 function AppRoutes() {
@@ -36,6 +37,7 @@ function AppRoutes() {
       <Route path="/entries/:id" element={<ViewEntryPage />} />
       <Route path="/entries/:id/edit" element={<EditEntryPage />} />
       <Route path="/timeline" element={<TimelinePage />} />
+      <Route path="/photos" element={<PhotosPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

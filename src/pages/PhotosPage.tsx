@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format, startOfDay, subDays } from 'date-fns';
+import { startOfDay, subDays } from 'date-fns';
 import { ArrowLeft, Flame } from 'lucide-react';
 import type { JournalEntry } from '../types/journal';
 import { getEntries } from '../storage/journalStorage';
@@ -18,37 +18,55 @@ function calcStreak(entries: JournalEntry[]) {
   return streak;
 }
 
-export default function TimelinePage() {
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
+interface PhotoItem {
+  url: string;
+  name: string;
+  entryId: string;
+  entryTitle: string;
+}
+
+export default function PhotosPage() {
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const [allEntries, setAllEntries] = useState<JournalEntry[]>([]);
+
   useEffect(() => {
-    getEntries().then((data) => {
-      const sorted = data.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      setEntries(sorted);
+    getEntries().then((entries) => {
+      setAllEntries(entries);
+      const all: PhotoItem[] = [];
+      for (const entry of entries) {
+        for (const img of entry.images) {
+          all.push({
+            url: img.url,
+            name: img.name,
+            entryId: entry.id,
+            entryTitle: entry.title,
+          });
+        }
+      }
+      setPhotos(all);
       setLoading(false);
     });
   }, []);
 
-  const streak = useMemo(() => calcStreak(entries), [entries]);
+  const streak = useMemo(() => calcStreak(allEntries), [allEntries]);
 
   if (loading) {
     return (
-      <div className="timeline-page">
+      <div className="photos-page">
         <div className="loading-screen" style={{ minHeight: 'auto', padding: 60, background: 'none' }}>
           <div className="loading-spinner" />
-          <p>Loading timeline...</p>
+          <p>Loading photos...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="timeline-page">
-      <div className="timeline-topbar">
+    <div className="photos-page">
+      <div className="photos-topbar">
         <button className="btn btn-ghost" onClick={() => navigate('/entries')}>
           <ArrowLeft size={18} /> Back
         </button>
@@ -59,29 +77,21 @@ export default function TimelinePage() {
         </div>
       </div>
 
-      {entries.length === 0 ? (
+      {photos.length === 0 ? (
         <div className="empty-state">
-          <p>No entries yet. Write your first entry to see your timeline.</p>
+          <p>No photos yet. Add images to your entries to see them here.</p>
         </div>
       ) : (
-        <div className="timeline-map">
-          <div className="timeline-line" />
-          {entries.map((entry, i) => (
+        <div className="photos-grid">
+          {photos.map((photo, i) => (
             <div
-              key={entry.id}
-              className={`timeline-node ${i % 2 === 0 ? 'left' : 'right'}`}
-              onClick={() => navigate(`/entries/${entry.id}`)}
+              key={i}
+              className="photos-item"
+              onClick={() => navigate(`/entries/${photo.entryId}`)}
             >
-              <div className="timeline-node-dot" />
-              <div className="timeline-node-strike" />
-              <div className="timeline-node-card">
-                <div className="timeline-node-content">
-                  <span className="timeline-node-date">
-                    {format(new Date(entry.createdAt), 'MMM dd, yyyy')}
-                  </span>
-                  <h4>{entry.title}</h4>
-                  <p>{entry.content.length > 80 ? entry.content.slice(0, 80) + '...' : entry.content}</p>
-                </div>
+              <img src={photo.url} alt={photo.name} />
+              <div className="photos-item-overlay">
+                <span>{photo.entryTitle}</span>
               </div>
             </div>
           ))}

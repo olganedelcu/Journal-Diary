@@ -1,13 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, startOfDay, subDays } from 'date-fns';
 import {
   Trash2, Search, BookOpen,
-  PenLine, LogOut, Clock, ImageIcon, Calendar,
+  PenLine, LogOut, Clock, ImageIcon, Calendar, Flame,
 } from 'lucide-react';
 import type { JournalEntry } from '../types/journal';
 import { getEntries, deleteEntry } from '../storage/journalStorage';
 import { useAuth } from '../context/AuthContext';
+
+function calcStreak(entries: JournalEntry[]) {
+  if (entries.length === 0) return 0;
+
+  const daysSet = new Set<string>();
+  for (const e of entries) {
+    daysSet.add(startOfDay(new Date(e.createdAt)).toISOString());
+  }
+
+  let streak = 0;
+  let day = startOfDay(new Date());
+
+  if (!daysSet.has(day.toISOString())) {
+    day = subDays(day, 1);
+  }
+
+  while (daysSet.has(day.toISOString())) {
+    streak++;
+    day = subDays(day, 1);
+  }
+
+  return streak;
+}
 
 export default function EntriesPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -22,6 +45,8 @@ export default function EntriesPage() {
       setLoading(false);
     });
   }, []);
+
+  const streak = useMemo(() => calcStreak(entries), [entries]);
 
   const filtered = entries
     .filter(
@@ -86,13 +111,20 @@ export default function EntriesPage() {
             </div>
             <span>Timeline</span>
           </button>
-          <button className="welcome-card" onClick={() => navigate('/entries/new')}>
+          <button className="welcome-card" onClick={() => navigate('/photos')}>
             <div className="welcome-card-icon">
               <ImageIcon size={28} />
             </div>
             <span>Photos</span>
           </button>
         </div>
+      </div>
+
+      {/* Streak widget */}
+      <div className="streak-widget">
+        <Flame size={24} className={streak > 0 ? 'streak-on' : 'streak-off'} />
+        <span className="streak-count">{streak}</span>
+        <span className="streak-label">day streak</span>
       </div>
 
       {/* Search */}
