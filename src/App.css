@@ -196,20 +196,53 @@ body {
   padding: 40px 24px;
 }
 
-.entries-header {
+/* Welcome banner at top of entries */
+.entries-welcome {
+  margin-bottom: 32px;
+  padding: 32px 36px;
+  background: linear-gradient(135deg, #f6f1ff 0%, #ede7f9 60%, #e2daf3 100%);
+  border-radius: var(--radius-xl);
+}
+
+.entries-welcome-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 28px;
 }
 
-.entries-header h1 {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 24px;
+.entries-welcome-text h1 {
+  font-size: 32px;
   font-weight: 700;
   color: var(--gray-900);
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+
+.entries-welcome-text p {
+  font-size: 15px;
+  color: var(--gray-500);
+}
+
+.entries-welcome-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.entries-welcome-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 480px;
+}
+
+.entries-welcome-grid .welcome-card {
+  gap: 8px;
+}
+.entries-welcome-grid .welcome-card-icon {
+  width: 64px;
+  height: 64px;
 }
 
 .search-bar {
@@ -247,9 +280,15 @@ body {
   padding: 80px 20px;
   color: var(--gray-400);
 }
+.empty-state h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gray-700);
+  margin-top: 16px;
+}
 .empty-state p {
-  margin: 16px 0 24px;
-  font-size: 16px;
+  margin: 8px 0 24px;
+  font-size: 15px;
 }
 
 /* ===== Table ===== */
@@ -858,15 +897,26 @@ body {
     gap: 20px;
   }
 
-  .entries-header {
+  .entries-welcome {
+    padding: 24px;
+  }
+  .entries-welcome-top {
     flex-direction: column;
-    align-items: flex-start;
     gap: 16px;
   }
-
-  .entries-header-actions {
-    width: 100%;
-    justify-content: space-between;
+  .entries-welcome-text h1 {
+    font-size: 26px;
+  }
+  .entries-welcome-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .entries-welcome-grid .welcome-card-icon {
+    width: 52px;
+    height: 52px;
+  }
+  .entries-welcome-grid .welcome-card span {
+    font-size: 12px;
   }
 
   .view-topbar {

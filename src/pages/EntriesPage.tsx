@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Plus, Eye, Pencil, Trash2, Search, BookOpen, PenLine, LogOut } from 'lucide-react';
+import {
+  Eye, Pencil, Trash2, Search, BookOpen,
+  PenLine, LogOut, Clock, ImageIcon,
+} from 'lucide-react';
 import type { JournalEntry } from '../types/journal';
 import { getEntries, deleteEntry } from '../storage/journalStorage';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +14,7 @@ export default function EntriesPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     getEntries().then((data) => {
@@ -41,38 +44,64 @@ export default function EntriesPage() {
   if (loading) {
     return (
       <div className="entries-page">
-        <p style={{ textAlign: 'center', padding: 60, color: '#9d9daa' }}>
-          Loading your journal...
-        </p>
+        <div className="loading-screen" style={{ minHeight: 'auto', padding: 60, background: 'none' }}>
+          <div className="loading-spinner" />
+          <p>Loading your journal...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="entries-page">
-      <div className="entries-header">
-        <h1>
-          <BookOpen size={28} />
-          My Journal
-        </h1>
-        <div className="entries-header-actions">
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate('/entries/new')}
-          >
-            <Plus size={18} />
-            Add Diary Page
+      {/* Welcome banner with quick-action cards */}
+      <div className="entries-welcome">
+        <div className="entries-welcome-top">
+          <div className="entries-welcome-text">
+            <h1>Welcome</h1>
+            <p>Your personal digital journal starts here</p>
+          </div>
+          <div className="entries-welcome-user">
+            <span className="welcome-email">{user?.email}</span>
+            <button className="btn btn-ghost btn-sm" onClick={signOut}>
+              <LogOut size={16} />
+            </button>
+          </div>
+        </div>
+
+        <div className="entries-welcome-grid">
+          <button className="welcome-card" onClick={() => navigate('/entries/new')}>
+            <div className="welcome-card-icon">
+              <PenLine size={24} />
+            </div>
+            <span>Write</span>
           </button>
-          <button className="btn btn-ghost btn-sm" onClick={signOut}>
-            <LogOut size={16} />
-            Sign Out
+          <button className="welcome-card" onClick={() => document.getElementById('search-input')?.focus()}>
+            <div className="welcome-card-icon">
+              <BookOpen size={24} />
+            </div>
+            <span>Journal</span>
+          </button>
+          <button className="welcome-card" onClick={() => document.querySelector('.entries-table-wrapper')?.scrollIntoView({ behavior: 'smooth' })}>
+            <div className="welcome-card-icon">
+              <Clock size={24} />
+            </div>
+            <span>Timeline</span>
+          </button>
+          <button className="welcome-card" onClick={() => navigate('/entries/new')}>
+            <div className="welcome-card-icon">
+              <ImageIcon size={24} />
+            </div>
+            <span>Photos</span>
           </button>
         </div>
       </div>
 
+      {/* Search */}
       <div className="search-bar">
         <Search size={18} className="search-icon" />
         <input
+          id="search-input"
           type="text"
           placeholder="Search by title or content..."
           value={search}
@@ -80,16 +109,18 @@ export default function EntriesPage() {
         />
       </div>
 
+      {/* Content */}
       {filtered.length === 0 ? (
         <div className="empty-state">
           <BookOpen size={48} />
-          <p>No journal entries yet. Start writing!</p>
+          <h2>No entries yet</h2>
+          <p>Start capturing your thoughts, memories, and moments.</p>
           <button
             className="btn btn-primary"
             onClick={() => navigate('/entries/new')}
           >
             <PenLine size={18} />
-            Add Your First Entry
+            Write Your First Entry
           </button>
         </div>
       ) : (
