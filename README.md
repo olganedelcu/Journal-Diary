@@ -1,73 +1,57 @@
-# React + TypeScript + Vite
+# Journal Diary
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A super easy journaling app where you can drop all your thoughts and keep track of them. Write stuff down, throw in some photos, and look back at it all whenever you want.
 
-Currently, two official plugins are available:
+![Journal entries page](screenshots/jornal.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## What it does
 
-## React Compiler
+- **Write diary entries** with a title, text, and photos
+- **Search** through all your entries by title or content
+- **Timeline view** that shows your entries on an alternating left/right visual timeline
+- **Photo gallery** pulls every image from your entries into one place
+- **Streak tracker** counts how many consecutive days you've been writing
+- **Pagination** so things stay fast even with lots of entries
+- **Data caching** with React Query so navigating between pages feels instant
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Everything is tied to your account, so your entries are private and synced across devices.
 
-## Expanding the ESLint configuration
+![Sign in page](screenshots/login.png)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Tech stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **React 19** + TypeScript
+- **Vite** for dev/build
+- **Supabase** for auth, database (Postgres), and image storage
+- **React Router** for navigation
+- **TanStack React Query** for data caching and mutations
+- **date-fns** for date formatting
+- **lucide-react** for icons
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Getting started
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The app expects a Supabase project with the schema defined in `supabase-setup.sql`. You'll need a `journal_entries` table and a `diary-images` storage bucket.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Project structure
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+src/
+  pages/         Page components (Auth, Welcome, Entries, View, Edit, Timeline, Photos)
+  hooks/         React Query hooks for data fetching and mutations
+  storage/       Supabase client and all database/storage functions
+  context/       Auth context provider
+  types/         TypeScript interfaces
+  App.tsx        Routes and app shell
+  App.css        All styles
+```
+
+## How it works
+
+You sign in with email/password (Supabase Auth handles this). Once logged in, you land on the entries page with quick-access cards for Write, Journal, Timeline, and Photos. Your entries show up as cards you can click into, search through, or delete. Each entry can have multiple photos that get uploaded to Supabase Storage.
+
+Row Level Security on the database means you can only see and modify your own entries. The app caches data client-side so going back and forth between pages doesn't re-fetch everything.
