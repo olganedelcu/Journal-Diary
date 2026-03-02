@@ -24,6 +24,11 @@ function rowToEntry(row: Record<string, unknown>): JournalEntry {
 
 // ---- Entries ----
 
+export interface PaginatedResult {
+  entries: JournalEntry[];
+  total: number;
+}
+
 export async function getEntries(): Promise<JournalEntry[]> {
   const { data, error } = await supabase
     .from('journal_entries')
@@ -35,6 +40,37 @@ export async function getEntries(): Promise<JournalEntry[]> {
     return [];
   }
   return (data ?? []).map(rowToEntry);
+}
+
+export async function getEntriesPaginated(
+  page: number,
+  pageSize: number,
+  search?: string
+): Promise<PaginatedResult> {
+  let query = supabase
+    .from('journal_entries')
+    .select('*', { count: 'exact' });
+
+  if (search) {
+    query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
+  }
+
+  const from = page * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await query
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    console.error('Failed to fetch entries:', error.message);
+    return { entries: [], total: 0 };
+  }
+
+  return {
+    entries: (data ?? []).map(rowToEntry),
+    total: count ?? 0,
+  };
 }
 
 export async function getEntry(id: string): Promise<JournalEntry | undefined> {

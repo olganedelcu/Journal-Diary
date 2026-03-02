@@ -4,12 +4,14 @@ import { format, startOfDay, subDays } from 'date-fns';
 import {
   Trash2, Search, BookOpen,
   PenLine, LogOut, Clock, ImageIcon, Calendar, Flame,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
-import type { JournalEntry } from '../types/journal';
-import { getEntries, deleteEntry } from '../storage/journalStorage';
 import { useAuth } from '../context/AuthContext';
+import { useEntriesPaginated, useAllEntries, useDeleteEntry } from '../hooks/useJournal';
 
-function calcStreak(entries: JournalEntry[]) {
+const PAGE_SIZE = 10;
+
+function calcStreak(entries: { createdAt: string }[]) {
   if (entries.length === 0) return 0;
 
   const daysSet = new Set<string>();
@@ -33,35 +35,35 @@ function calcStreak(entries: JournalEntry[]) {
 }
 
 export default function EntriesPage() {
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(0);
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const deleteMutation = useDeleteEntry();
 
+  // Debounce search input
   useEffect(() => {
-    getEntries().then((data) => {
-      setEntries(data);
-      setLoading(false);
-    });
-  }, []);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const streak = useMemo(() => calcStreak(entries), [entries]);
+  const { data, isLoading } = useEntriesPaginated(page, PAGE_SIZE, debouncedSearch || undefined);
+  const { data: allEntries } = useAllEntries();
 
-  const filtered = entries
-    .filter(
-      (e) =>
-        e.title.toLowerCase().includes(search.toLowerCase()) ||
-        e.content.toLowerCase().includes(search.toLowerCase())
-    )
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const entries = data?.entries ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const streak = useMemo(() => calcStreak(allEntries ?? []), [allEntries]);
 
   async function handleDelete(id: string, e: React.MouseEvent) {
     e.stopPropagation();
     if (!confirm('Are you sure you want to delete this entry?')) return;
-    await deleteEntry(id);
-    const updated = await getEntries();
-    setEntries(updated);
+    deleteMutation.mutate(id);
   }
 
   function truncate(text: string, len: number) {
@@ -69,7 +71,7 @@ export default function EntriesPage() {
     return text.slice(0, len) + '...';
   }
 
-  if (loading) {
+  if (isLoading && entries.length === 0) {
     return (
       <div className="entries-page">
         <div className="loading-screen" style={{ minHeight: 'auto', padding: 60, background: 'none' }}>
@@ -141,58 +143,91 @@ export default function EntriesPage() {
         </div>
 
         {/* Diary page cards */}
-        {filtered.length === 0 ? (
+        {entries.length === 0 && !isLoading ? (
           <div className="empty-state">
             <BookOpen size={48} />
-            <h2>No entries yet</h2>
-            <p>Start capturing your thoughts, memories, and moments.</p>
-            <button
-              className="btn btn-primary"
-              onClick={() => navigate('/entries/new')}
-            >
-              <PenLine size={18} />
-              Write Your First Entry
-            </button>
+            <h2>{debouncedSearch ? 'No matches' : 'No entries yet'}</h2>
+            <p>
+              {debouncedSearch
+                ? 'Try a different search term.'
+                : 'Start capturing your thoughts, memories, and moments.'}
+            </p>
+            {!debouncedSearch && (
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate('/entries/new')}
+              >
+                <PenLine size={18} />
+                Write Your First Entry
+              </button>
+            )}
           </div>
         ) : (
-          <div className="diary-grid">
-            {filtered.map((entry) => (
-              <article
-                key={entry.id}
-                className="diary-card"
-                onClick={() => navigate(`/entries/${entry.id}`)}
-              >
-                {entry.images.length > 0 && (
-                  <div className="diary-card-img">
-                    <img src={entry.images[0].url} alt="" />
-                  </div>
-                )}
-                <div className="diary-card-body">
-                  <h3 className="diary-card-title">{entry.title}</h3>
-                  <p className="diary-card-text">{truncate(entry.content, 150)}</p>
-                  <div className="diary-card-footer">
-                    <span className="diary-card-date">
-                      <Calendar size={14} />
-                      {format(new Date(entry.createdAt), 'MMM dd, yyyy')}
-                    </span>
-                    {entry.images.length > 0 && (
-                      <span className="diary-card-photos">
-                        <ImageIcon size={14} />
-                        {entry.images.length}
+          <>
+            <div className="diary-grid">
+              {entries.map((entry) => (
+                <article
+                  key={entry.id}
+                  className="diary-card"
+                  onClick={() => navigate(`/entries/${entry.id}`)}
+                >
+                  {entry.images.length > 0 && (
+                    <div className="diary-card-img">
+                      <img src={entry.images[0].url} alt="" />
+                    </div>
+                  )}
+                  <div className="diary-card-body">
+                    <h3 className="diary-card-title">{entry.title}</h3>
+                    <p className="diary-card-text">{truncate(entry.content, 150)}</p>
+                    <div className="diary-card-footer">
+                      <span className="diary-card-date">
+                        <Calendar size={14} />
+                        {format(new Date(entry.createdAt), 'MMM dd, yyyy')}
                       </span>
-                    )}
-                    <button
-                      className="diary-card-delete icon-btn icon-btn-danger"
-                      title="Delete"
-                      onClick={(e) => handleDelete(entry.id, e)}
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                      {entry.images.length > 0 && (
+                        <span className="diary-card-photos">
+                          <ImageIcon size={14} />
+                          {entry.images.length}
+                        </span>
+                      )}
+                      <button
+                        className="diary-card-delete icon-btn icon-btn-danger"
+                        title="Delete"
+                        onClick={(e) => handleDelete(entry.id, e)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="pagination">
+                <button
+                  className="btn btn-ghost btn-sm"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  <ChevronLeft size={16} />
+                  Prev
+                </button>
+                <span className="pagination-info">
+                  {page + 1} of {totalPages}
+                </span>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

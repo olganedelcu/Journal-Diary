@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
@@ -10,38 +10,35 @@ import {
   ImageIcon,
   FileText,
 } from 'lucide-react';
-import type { JournalEntry } from '../types/journal';
-import { getEntry, deleteEntry } from '../storage/journalStorage';
+import { useEntry, useDeleteEntry } from '../hooks/useJournal';
 
 export default function ViewEntryPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [entry, setEntry] = useState<JournalEntry | null>(null);
+  const { data: entry, isLoading } = useEntry(id);
+  const deleteMutation = useDeleteEntry();
 
   useEffect(() => {
-    if (!id) return;
-    getEntry(id).then((found) => {
-      if (found) {
-        setEntry(found);
-      } else {
-        navigate('/entries');
-      }
-    });
-  }, [id, navigate]);
+    if (!isLoading && !entry) {
+      navigate('/entries');
+    }
+  }, [isLoading, entry, navigate]);
 
-  async function handleDelete() {
+  function handleDelete() {
     if (!entry) return;
     if (!confirm('Are you sure you want to delete this entry?')) return;
-    await deleteEntry(entry.id);
-    navigate('/entries');
+    deleteMutation.mutate(entry.id, {
+      onSuccess: () => navigate('/entries'),
+    });
   }
 
-  if (!entry) {
+  if (isLoading || !entry) {
     return (
       <div className="view-page">
-        <p style={{ textAlign: 'center', padding: 60, color: '#9d9daa' }}>
-          Loading entry...
-        </p>
+        <div className="loading-screen" style={{ minHeight: 'auto', padding: 60, background: 'none' }}>
+          <div className="loading-spinner" />
+          <p>Loading entry...</p>
+        </div>
       </div>
     );
   }

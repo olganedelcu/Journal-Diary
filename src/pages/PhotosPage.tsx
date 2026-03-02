@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { startOfDay, subDays } from 'date-fns';
 import { ArrowLeft, Flame } from 'lucide-react';
-import type { JournalEntry } from '../types/journal';
-import { getEntries } from '../storage/journalStorage';
+import { useAllEntries } from '../hooks/useJournal';
 
-function calcStreak(entries: JournalEntry[]) {
+function calcStreak(entries: { createdAt: string }[]) {
   if (entries.length === 0) return 0;
   const daysSet = new Set<string>();
   for (const e of entries) {
@@ -26,34 +25,27 @@ interface PhotoItem {
 }
 
 export default function PhotosPage() {
-  const [photos, setPhotos] = useState<PhotoItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { data: allEntries, isLoading } = useAllEntries();
 
-  const [allEntries, setAllEntries] = useState<JournalEntry[]>([]);
-
-  useEffect(() => {
-    getEntries().then((entries) => {
-      setAllEntries(entries);
-      const all: PhotoItem[] = [];
-      for (const entry of entries) {
-        for (const img of entry.images) {
-          all.push({
-            url: img.url,
-            name: img.name,
-            entryId: entry.id,
-            entryTitle: entry.title,
-          });
-        }
+  const photos = useMemo(() => {
+    const all: PhotoItem[] = [];
+    for (const entry of allEntries ?? []) {
+      for (const img of entry.images) {
+        all.push({
+          url: img.url,
+          name: img.name,
+          entryId: entry.id,
+          entryTitle: entry.title,
+        });
       }
-      setPhotos(all);
-      setLoading(false);
-    });
-  }, []);
+    }
+    return all;
+  }, [allEntries]);
 
-  const streak = useMemo(() => calcStreak(allEntries), [allEntries]);
+  const streak = useMemo(() => calcStreak(allEntries ?? []), [allEntries]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="photos-page">
         <div className="loading-screen" style={{ minHeight: 'auto', padding: 60, background: 'none' }}>
@@ -83,9 +75,9 @@ export default function PhotosPage() {
         </div>
       ) : (
         <div className="photos-grid">
-          {photos.map((photo, i) => (
+          {photos.map((photo) => (
             <div
-              key={i}
+              key={`${photo.entryId}-${photo.url}`}
               className="photos-item"
               onClick={() => navigate(`/entries/${photo.entryId}`)}
             >

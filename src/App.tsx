@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AuthPage from './pages/AuthPage';
 import WelcomePage from './pages/WelcomePage';
@@ -8,6 +9,15 @@ import EditEntryPage from './pages/EditEntryPage';
 import TimelinePage from './pages/TimelinePage';
 import PhotosPage from './pages/PhotosPage';
 import './App.css';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      refetchOnWindowFocus: true,
+    },
+  },
+});
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -45,13 +55,15 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <div className="app-shell">
-          <AppRoutes />
-        </div>
-      </AuthProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <div className="app-shell">
+            <AppRoutes />
+          </div>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

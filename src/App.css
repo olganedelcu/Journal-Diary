@@ -1263,6 +1263,28 @@ body {
   flex-shrink: 0;
 }
 
+/* ===== Pagination ===== */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px 0 8px;
+}
+
+.pagination-info {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-500);
+  min-width: 70px;
+  text-align: center;
+}
+
+.pagination .btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 /* ===== Timeline Page ===== */
 .timeline-page {
   max-width: 900px;

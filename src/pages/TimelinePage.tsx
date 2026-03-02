@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, startOfDay, subDays } from 'date-fns';
 import { ArrowLeft, Flame } from 'lucide-react';
-import type { JournalEntry } from '../types/journal';
-import { getEntries } from '../storage/journalStorage';
+import { useAllEntries } from '../hooks/useJournal';
 
-function calcStreak(entries: JournalEntry[]) {
+function calcStreak(entries: { createdAt: string }[]) {
   if (entries.length === 0) return 0;
   const daysSet = new Set<string>();
   for (const e of entries) {
@@ -19,23 +18,20 @@ function calcStreak(entries: JournalEntry[]) {
 }
 
 export default function TimelinePage() {
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { data: allEntries, isLoading } = useAllEntries();
 
-  useEffect(() => {
-    getEntries().then((data) => {
-      const sorted = data.sort(
+  const entries = useMemo(
+    () =>
+      [...(allEntries ?? [])].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      setEntries(sorted);
-      setLoading(false);
-    });
-  }, []);
+      ),
+    [allEntries]
+  );
 
   const streak = useMemo(() => calcStreak(entries), [entries]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="timeline-page">
         <div className="loading-screen" style={{ minHeight: 'auto', padding: 60, background: 'none' }}>

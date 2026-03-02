@@ -3,12 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { ArrowLeft, Save, ImagePlus, X, Loader } from 'lucide-react';
 import type { JournalEntry, JournalImage } from '../types/journal';
-import {
-  getEntry,
-  saveEntry,
-  uploadImage,
-  deleteImage,
-} from '../storage/journalStorage';
+import { uploadImage, deleteImage } from '../storage/journalStorage';
+import { useEntry, useSaveEntry } from '../hooks/useJournal';
 
 export default function EditEntryPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,25 +16,19 @@ export default function EditEntryPage() {
   const [content, setContent] = useState('');
   const [images, setImages] = useState<JournalImage[]>([]);
   const [createdAt, setCreatedAt] = useState(new Date().toISOString());
-  const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const [entryId] = useState(() => (isNew ? uuidv4() : id));
+  const { data: existing } = useEntry(isNew ? undefined : id);
+  const saveMutation = useSaveEntry();
 
   useEffect(() => {
-    if (isNew) return;
-    if (!id) return;
-    getEntry(id).then((found) => {
-      if (found) {
-        setTitle(found.title);
-        setContent(found.content);
-        setImages(found.images);
-        setCreatedAt(found.createdAt);
-      } else {
-        navigate('/entries');
-      }
-    });
-  }, [id, isNew, navigate]);
+    if (isNew || !existing) return;
+    setTitle(existing.title);
+    setContent(existing.content);
+    setImages(existing.images);
+    setCreatedAt(existing.createdAt);
+  }, [existing, isNew]);
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -68,13 +58,11 @@ export default function EditEntryPage() {
     setImages((prev) => prev.filter((i) => i.id !== imgId));
   }
 
-  async function handleSave() {
+  function handleSave() {
     if (!title.trim()) {
       alert('Please add a title for your journal entry.');
       return;
     }
-
-    setSaving(true);
 
     const entry: JournalEntry = {
       id: entryId,
@@ -85,9 +73,9 @@ export default function EditEntryPage() {
       updatedAt: new Date().toISOString(),
     };
 
-    await saveEntry(entry);
-    setSaving(false);
-    navigate(`/entries/${entry.id}`);
+    saveMutation.mutate(entry, {
+      onSuccess: () => navigate(`/entries/${entry.id}`),
+    });
   }
 
   return (
@@ -104,10 +92,10 @@ export default function EditEntryPage() {
         <button
           className="btn btn-primary"
           onClick={handleSave}
-          disabled={saving}
+          disabled={saveMutation.isPending}
         >
-          {saving ? <Loader size={16} className="spin" /> : <Save size={16} />}
-          {saving ? 'Saving...' : 'Save Entry'}
+          {saveMutation.isPending ? <Loader size={16} className="spin" /> : <Save size={16} />}
+          {saveMutation.isPending ? 'Saving...' : 'Save Entry'}
         </button>
       </div>
 
