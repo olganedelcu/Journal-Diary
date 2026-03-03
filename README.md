@@ -1,6 +1,7 @@
 # Journal Diary
 
 A super easy journaling app where you can drop all your thoughts and keep track of them. Write stuff down, throw in some photos, and look back at it all whenever you want.
+Link: https://journal.olganedelcu.com/
 
 ![Journal entries page](screenshots/jornal.png)
 
