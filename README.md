@@ -56,3 +56,5 @@ src/
 You sign in with email/password (Supabase Auth handles this). Once logged in, you land on the entries page with quick-access cards for Write, Journal, Timeline, and Photos. Your entries show up as cards you can click into, search through, or delete. Each entry can have multiple photos that get uploaded to Supabase Storage.
 
 Row Level Security on the database means you can only see and modify your own entries. The app caches data client-side so going back and forth between pages doesn't re-fetch everything.
+
+Now this.
