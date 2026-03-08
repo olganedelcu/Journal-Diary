@@ -57,4 +57,4 @@ You sign in with email/password (Supabase Auth handles this). Once logged in, yo
 
 Row Level Security on the database means you can only see and modify your own entries. The app caches data client-side so going back and forth between pages doesn't re-fetch everything.
 
-Now this.+
+
