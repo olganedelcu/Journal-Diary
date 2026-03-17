@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, ImagePlus, X, Loader } from 'lucide-react';
+import { ArrowLeft, Save, ImagePlus, Camera, X, Loader } from 'lucide-react';
+import CameraCapture from '../components/CameraCapture';
 import type { JournalEntry, JournalImage } from '../types/journal';
 import { uploadImage, deleteImage } from '../storage/journalStorage';
 import { useEntry, useSaveEntry } from '../hooks/useJournal';
@@ -17,6 +18,7 @@ export default function EditEntryPage() {
   const [images, setImages] = useState<JournalImage[]>([]);
   const [createdAt, setCreatedAt] = useState(new Date().toISOString());
   const [uploading, setUploading] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
 
   const [entryId] = useState(() => (isNew ? uuidv4() : id));
   const { data: existing } = useEntry(isNew ? undefined : id);
@@ -56,6 +58,16 @@ export default function EditEntryPage() {
       await deleteImage(img.storagePath);
     }
     setImages((prev) => prev.filter((i) => i.id !== imgId));
+  }
+
+  async function handleCameraCapture(file: File) {
+    setShowCamera(false);
+    setUploading(true);
+    const uploaded = await uploadImage(file, entryId);
+    if (uploaded) {
+      setImages((prev) => [...prev, uploaded]);
+    }
+    setUploading(false);
   }
 
   function handleSave() {
@@ -134,18 +146,35 @@ export default function EditEntryPage() {
             onChange={handleImageUpload}
             style={{ display: 'none' }}
           />
-          <button
-            className="btn btn-secondary"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <Loader size={18} className="spin" />
-            ) : (
-              <ImagePlus size={18} />
-            )}
-            {uploading ? 'Uploading...' : 'Upload Images'}
-          </button>
+          <div className="photo-actions">
+            <button
+              className="btn btn-secondary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? (
+                <Loader size={18} className="spin" />
+              ) : (
+                <ImagePlus size={18} />
+              )}
+              {uploading ? 'Uploading...' : 'Upload Images'}
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowCamera(true)}
+              disabled={uploading}
+            >
+              <Camera size={18} />
+              Take Photo
+            </button>
+          </div>
+
+          {showCamera && (
+            <CameraCapture
+              onCapture={handleCameraCapture}
+              onClose={() => setShowCamera(false)}
+            />
+          )}
 
           {images.length > 0 && (
             <div className="edit-image-grid">
