@@ -10,6 +10,7 @@ export interface JournalEntry {
   id: string;
   title: string;
   content: string;
+  quote: string;
   images: JournalImage[];
   createdAt: string;
   updatedAt: string;

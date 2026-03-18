@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, ImagePlus, Camera, X, Loader } from 'lucide-react';
+import { ArrowLeft, Save, ImagePlus, Camera, X, Loader, Quote } from 'lucide-react';
 import CameraCapture from '../components/CameraCapture';
 import type { JournalEntry, JournalImage } from '../types/journal';
 import { uploadImage, deleteImage } from '../storage/journalStorage';
@@ -14,6 +14,7 @@ export default function EditEntryPage() {
   const isNew = !id;
 
   const [title, setTitle] = useState('');
+  const [quote, setQuote] = useState('');
   const [content, setContent] = useState('');
   const [images, setImages] = useState<JournalImage[]>([]);
   const [createdAt, setCreatedAt] = useState(new Date().toISOString());
@@ -27,6 +28,7 @@ export default function EditEntryPage() {
   useEffect(() => {
     if (isNew || !existing) return;
     setTitle(existing.title);
+    setQuote(existing.quote);
     setContent(existing.content);
     setImages(existing.images);
     setCreatedAt(existing.createdAt);
@@ -79,6 +81,7 @@ export default function EditEntryPage() {
     const entry: JournalEntry = {
       id: entryId,
       title: title.trim(),
+      quote: quote.trim(),
       content,
       images,
       createdAt,
@@ -121,6 +124,20 @@ export default function EditEntryPage() {
             placeholder="Give your entry a title..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="quote">
+            <Quote size={14} /> Quote of the Day
+          </label>
+          <input
+            id="quote"
+            type="text"
+            className="form-input quote-input"
+            placeholder="A quote that inspires you today..."
+            value={quote}
+            onChange={(e) => setQuote(e.target.value)}
           />
         </div>
 

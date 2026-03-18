@@ -76,6 +76,9 @@ export default function TimelinePage() {
                     {format(new Date(entry.createdAt), 'MMM dd, yyyy')}
                   </span>
                   <h4>{entry.title}</h4>
+                  {entry.quote && (
+                    <p className="timeline-node-quote">"{entry.quote.length > 60 ? entry.quote.slice(0, 60) + '...' : entry.quote}"</p>
+                  )}
                   <p>{entry.content.length > 80 ? entry.content.slice(0, 80) + '...' : entry.content}</p>
                 </div>
               </div>

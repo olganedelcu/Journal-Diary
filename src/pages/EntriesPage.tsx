@@ -178,6 +178,9 @@ export default function EntriesPage() {
                   )}
                   <div className="diary-card-body">
                     <h3 className="diary-card-title">{entry.title}</h3>
+                    {entry.quote && (
+                      <p className="diary-card-quote">"{truncate(entry.quote, 80)}"</p>
+                    )}
                     <p className="diary-card-text">{truncate(entry.content, 150)}</p>
                     <div className="diary-card-footer">
                       <span className="diary-card-date">

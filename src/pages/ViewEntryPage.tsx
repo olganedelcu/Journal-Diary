@@ -9,6 +9,7 @@ import {
   Clock,
   ImageIcon,
   FileText,
+  Quote,
 } from 'lucide-react';
 import { useEntry, useDeleteEntry } from '../hooks/useJournal';
 
@@ -91,6 +92,13 @@ export default function ViewEntryPage() {
           )}
         </div>
       </div>
+
+      {entry.quote && (
+        <blockquote className="entry-quote">
+          <Quote size={20} className="entry-quote-icon" />
+          <p>{entry.quote}</p>
+        </blockquote>
+      )}
 
       <div className="view-body">
         <div className="card">
